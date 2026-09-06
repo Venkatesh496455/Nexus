@@ -1,0 +1,57 @@
+# NEXUS Policy Configuration
+# This file is the single source of truth for risk decisions.
+# The classifier (risk_classifier.py) contains NO hardcoded risk rules —
+# it only reads and applies what's written here.
+#
+# GOLDEN RULE: When uncertain, escalate UP, never down.
+#   uncertain -> normal      (never uncertain -> routine)
+#   uncertain -> high_risk   (never uncertain -> normal, if genuinely unclear)
+# A PR touching multiple categories is classified by its RISKIEST file/change,
+# never its safest.
+
+# Paths that are ALWAYS high_risk, no matter what the change is.
+# Matching is case-insensitive and checks for the pattern anywhere in the path.
+protected_paths:
+  - ".github/workflows/"
+  - "auth/"
+  - "secrets/"
+  - "payments/"
+  - "billing/"
+  - "infra/"
+  - "migrations/"
+  - "docker/"
+  - "Dockerfile"
+  - ".env"
+  - "config/production"
+
+# Operation types NEXUS recognizes, and their BASE risk level
+# before path checks, size checks, or mixed-file promotion are applied.
+operation_risk_map:
+  docs_only: routine
+  formatting_only: routine
+  tests_only: routine
+  dependency_patch_or_minor: routine
+  dependency_major: normal
+  new_feature: normal
+  logic_change: normal
+  schema_change: high_risk
+  unknown: normal        # unrecognized change type -> never defaults to routine
+
+# Of the operation types above, ONLY these are eligible for full autonomy
+# (routine tier + auto-merge). Everything else requires human approval
+# even if its base risk level says "routine".
+allowlist:
+  - docs_only
+  - formatting_only
+  - tests_only
+  - dependency_patch_or_minor
+
+# If total changed lines exceeds this, bump the risk level up one tier,
+# regardless of operation type. A large "formatting fix" is suspicious.
+size_threshold_lines: 150
+
+# Escalation order used when bumping risk up a tier.
+risk_tier_order:
+  - routine
+  - normal
+  - high_risk
