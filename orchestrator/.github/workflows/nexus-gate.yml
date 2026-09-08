@@ -1,0 +1,40 @@
+name: NEXUS Gate
+
+# Runs automatically whenever a PR is opened, updated, or reopened.
+# This is what brings the risk classifier to life — before this file
+# exists, the classifier is just code sitting in the repo, unused.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write   # needed to post the risk-assessment comment
+
+jobs:
+  classify-risk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run NEXUS risk classifier
+        id: nexus_gate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python orchestrator/gate_runner.py
+
+      - name: Show result in workflow summary
+        run: |
+          echo "Risk level: ${{ steps.nexus_gate.outputs.risk_level }}" >> $GITHUB_STEP_SUMMARY
+          echo "Allowlisted: ${{ steps.nexus_gate.outputs.is_allowlisted }}" >> $GITHUB_STEP_SUMMARY
