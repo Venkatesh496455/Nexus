@@ -1,0 +1,43 @@
+name: NEXUS Trigger Listener
+
+# Watches every PR event on the repo. Most will be silently ignored —
+# that's correct behavior, not a bug. Only genuine Dependabot-originated
+# PRs produce a logged task record. This is the event-driven principle
+# enforced in code, not just in documentation.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write   # needed to commit the task log entry back to the repo
+
+jobs:
+  detect-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run NEXUS trigger listener
+        id: nexus_trigger
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: python orchestrator/trigger_listener.py
+
+      - name: Commit task log if updated
+        run: |
+          if [ -n "$(git status --porcelain logs/audit/tasks.jsonl 2>/dev/null)" ]; then
+            git config user.name "nexus-bot"
+            git config user.email "nexus-bot@users.noreply.github.com"
+            git add logs/audit/tasks.jsonl
+            git commit -m "NEXUS: log detected trigger for PR #${{ github.event.pull_request.number }}"
+            git push
+          else
+            echo "No new trigger detected — nothing to commit."
+          fi
