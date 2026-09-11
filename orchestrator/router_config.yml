@@ -1,0 +1,46 @@
+# NEXUS Model Router Configuration
+# Defines WHICH ROLES a task needs, and for each role, the ORDERED
+# list of agents to try (first = preferred, rest = quota/availability
+# fallbacks). This enforces "route by model/role, not by fixed tool"
+# per the model-agnostic orchestration principle.
+
+# Maps a trigger/task type to the list of roles it requires.
+# A task can require more than one role (e.g. implementation + QA).
+task_role_map:
+  dependency_update:
+    - implementation
+    - qa
+  bug_fix:
+    - implementation
+    - qa
+    - review
+  new_feature:
+    - implementation
+    - qa
+    - review
+  ui_issue:
+    - implementation
+    - ui_design
+    - qa
+  docs_update:
+    - implementation
+
+# For each role, the ordered fallback chain of agents.
+# The router tries agents top-to-bottom, skipping any marked
+# unavailable in agent_status.yml (quota exceeded, offline, etc).
+role_agent_chain:
+  implementation:
+    - claude_code
+    - opencode
+  qa:
+    - gemini_cli
+  review:
+    - opencode
+  ui_design:
+    - pencil_dev
+
+# Roles that MUST be satisfied for the task to proceed at all.
+# If no available agent exists for a required role, the task is
+# held (not silently dropped, not force-assigned to a wrong agent).
+required_roles:
+  - implementation
