@@ -1,0 +1,22 @@
+# NEXUS Agent Status
+# Simple availability tracking so the router can skip an agent that's
+# out of quota or offline, and fall back to the next one in its chain.
+# In later stages this can be updated automatically by the agents
+# themselves; for now it's edited manually when you hit a quota limit.
+
+agents:
+  claude_code:
+    available: true
+    notes: "Lead developer — primary implementation agent"
+
+  opencode:
+    available: true
+    notes: "Free/MIT, headless via GitHub Actions — architecture review + fallback implementer"
+
+  gemini_cli:
+    available: true
+    notes: "QA/testing — quota-aware, don't use for every trivial change"
+
+  pencil_dev:
+    available: true
+    notes: "UI/UX — only used when a task requires the ui_design role"
