@@ -1,0 +1,43 @@
+# NEXUS Scout — Discovery Configuration
+#
+# Replaces a hand-maintained repo list with SEARCH CRITERIA. Scout
+# searches GitHub broadly for issues that carry a genuine "help
+# wanted"-style signal, rather than requiring you to name repos
+# one by one.
+#
+# Safety note: this does NOT weaken the mandatory policy check.
+# Every issue found here still goes through policy_check.py before
+# Scout will treat it as ready to draft — that gate is unconditional,
+# regardless of how the issue was discovered.
+
+# Two searches run and get merged:
+#   1. "stack" search — repos in languages you actually work in
+#   2. "general" search — any language, but with a higher star bar
+#      as a basic quality/legitimacy signal, since there's no
+#      language match narrowing it down
+
+stack_languages:
+  - python
+  - c++
+  - java
+  - kotlin
+
+general_search:
+  enabled: true
+  min_stars: 100    # rough legitimacy bar for repos outside your stack
+
+# Same label signal as before — Scout only surfaces issues a
+# maintainer has explicitly tagged as wanting outside help.
+issue_label_allowlist:
+  - "good first issue"
+  - "help wanted"
+  - "documentation"
+
+# Hard cap per search run, so one run can't accidentally return an
+# unbounded flood of results or burn through API quota.
+max_results_per_search: 15
+
+# How many days back to look. Very old "good first issue" labels are
+# often stale (already claimed, or abandoned) — this keeps results
+# reasonably fresh.
+max_age_days: 60
