@@ -1,19 +1,25 @@
 name: NEXUS Gate
 
-# Runs automatically whenever a PR is opened, updated, or reopened.
-# This is what brings the risk classifier to life — before this file
-# exists, the classifier is just code sitting in the repo, unused.
+# Stage 1: classify risk and comment (unchanged from before).
+# Stage 2 (new): if the PR came back routine + allowlisted, run QA
+# and — only if QA passes — enable GitHub's native auto-merge.
+# Everything else is left exactly as before: not routine or not
+# allowlisted means stage 2 does nothing at all, and the PR simply
+# waits for Venkatesh's manual approval.
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
-  pull-requests: write   # needed to post the risk-assessment comment
+  contents: write        # needed to enable auto-merge on the PR
+  pull-requests: write    # needed to post comments
 
 jobs:
   classify-risk:
     runs-on: ubuntu-latest
+    outputs:
+      risk_level: ${{ steps.nexus_gate.outputs.risk_level }}
+      is_allowlisted: ${{ steps.nexus_gate.outputs.is_allowlisted }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,3 +44,28 @@ jobs:
         run: |
           echo "Risk level: ${{ steps.nexus_gate.outputs.risk_level }}" >> $GITHUB_STEP_SUMMARY
           echo "Allowlisted: ${{ steps.nexus_gate.outputs.is_allowlisted }}" >> $GITHUB_STEP_SUMMARY
+
+  auto-merge-pipeline:
+    needs: classify-risk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run NEXUS pipeline (QA + auto-merge decision)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NEXUS_RISK_LEVEL: ${{ needs.classify-risk.outputs.risk_level }}
+          NEXUS_IS_ALLOWLISTED: ${{ needs.classify-risk.outputs.is_allowlisted }}
+        run: python orchestrator/pipeline.py
