@@ -7,7 +7,7 @@
 # Maps a trigger/task type to the list of roles it requires.
 # A task can require more than one role (e.g. implementation + QA).
 task_role_map:
-  dependency_update:
+  dependency_update: - qa 
     # No "implementation" role here on purpose: Dependabot itself
     # already writes the version-bump diff. NEXUS's job for this
     # trigger type is to verify it (QA), not re-implement it.
