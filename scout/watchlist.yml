@@ -1,0 +1,24 @@
+# NEXUS Open-Source Scout — Watchlist
+#
+# Scout ONLY looks at repos listed here. It never crawls or searches
+# GitHub broadly on its own — that would be exactly the kind of
+# "manufactured activity" the whole NEXUS philosophy exists to avoid.
+# Adding a repo here is an explicit decision you make, not something
+# Scout decides for itself.
+#
+# Add repos you'd genuinely like to contribute to. Good candidates:
+# projects you already use, whose codebase you understand, and that
+# are active (recent commits/issues) and welcoming to outside PRs.
+
+watchlist:
+  # Example — remove or replace with real repos you want Scout to watch:
+  # - repo: "facebook/react"
+  #   notes: "Only interested in docs/typo fixes for now"
+
+  # Issue labels Scout treats as signal that a maintainer WANTS outside
+  # help (as opposed to guessing at what's welcome). Scout only surfaces
+  # issues carrying at least one of these labels.
+issue_label_allowlist:
+  - "good first issue"
+  - "help wanted"
+  - "documentation"
